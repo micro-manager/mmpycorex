@@ -1,7 +1,7 @@
 import threading
 from pyjavaz import JavaObject, PullSocket, DEFAULT_BRIDGE_PORT
 
-from .headless import  _PYMMCORES
+from .launcher import  _PYMMCORES
 
 class _CoreCallback:
     """

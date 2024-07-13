@@ -8,10 +8,13 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
     - name: Install dependencies
@@ -21,5 +24,7 @@ jobs:
     - name: Install package dependencies
       run: |
         pip install .
-    - name: Build and publish
-      run: flit publish
+    - name: Build package
+      run: flit build
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1

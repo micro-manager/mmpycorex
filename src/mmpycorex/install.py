@@ -77,7 +77,7 @@ def find_existing_mm_install():
     else:
         raise ValueError(f"Unsupported OS: {platform}")
 
-def download_and_install(destination='auto', mm_install_log_path=None, ci_build=False):
+def download_and_install_mm(destination='auto', mm_install_log_path=None, ci_build=False):
     """
     Download and install the latest nightly build of Micro-Manager
 

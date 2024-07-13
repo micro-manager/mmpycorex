@@ -6,8 +6,19 @@ build-backend = "flit_core.buildapi"
 name = "mmpycorex"
 authors = [{name = "Henry Pinkard", email = "henry.pinkard.open.source@gmail.com"}]
 license = {file = "LICENSE"}
-classifiers = ["License :: OSI Approved :: BSD License"]
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "pymmcore",
+    "pyzmq"
+]
 dynamic = ["version", "description"]
 
 [project.urls]
 Home = "https://github.com/micro-manager/mmpycorex"
+
+# Specify the module directory within the project table
+[tool.flit.module]
+name = "src.mmpycorex"

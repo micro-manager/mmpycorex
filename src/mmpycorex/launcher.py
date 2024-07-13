@@ -85,6 +85,9 @@ def _create_pymmcore_instance():
 _JAVA_HEADLESS_SUBPROCESSES = []
 _PYMMCORES = []
 
+def is_pymmcore_active():
+    return len(_PYMMCORES) > 0
+
 def terminate_core_instances(debug=False):
     
     for p in _JAVA_HEADLESS_SUBPROCESSES:

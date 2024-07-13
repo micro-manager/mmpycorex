@@ -16,7 +16,9 @@ dependencies = [
     "requests",
     "wget"
 ]
-dynamic = ["version", "description"]
+dynamic = ["version"]
+description = "Python package for unified MMCore access through pymmcore or ZMQ-MMCoreJ + associated utilities"
+readme = "README.md"
 
 [project.urls]
 Home = "https://github.com/micro-manager/mmpycorex"

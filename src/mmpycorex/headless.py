@@ -112,7 +112,6 @@ def terminate_core_instances(debug=False):
         c.unloadAllDevices()
         if debug:
             logger.debug('Unloaded all devices')
-        Engine.get_instance().shutdown()
         if debug:
             logger.debug('Engine shut down')
     _PYMMCORES.clear()
@@ -120,7 +119,7 @@ def terminate_core_instances(debug=False):
         logger.debug('Headless stopped')
 
 # make sure any Java processes are cleaned up when Python exits
-atexit.register(stop_headless)
+atexit.register(terminate_core_instances)
 
 def create_core_instance(
     mm_app_path: str, config_file: str=None, java_loc: str=None,

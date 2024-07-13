@@ -12,13 +12,11 @@ classifiers = [
 ]
 dependencies = [
     "pymmcore",
-    "pyzmq"
+    "pyjavaz==1.2.4",
+    "requests",
+    "wget"
 ]
 dynamic = ["version", "description"]
 
 [project.urls]
 Home = "https://github.com/micro-manager/mmpycorex"
-
-# Specify the module directory within the project table
-[tool.flit.module]
-name = "src.mmpycorex"

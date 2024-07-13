@@ -14,11 +14,40 @@ import re
 
 logger = logging.getLogger(__name__)
 
+
+#### Some functions to normalize the API between the Java and Python backends
+
 class TaggedImage:
 
     def __init__(self, tags, pix):
         self.tags = tags
         self.pix = pix
+
+def pop_next_tagged_image(self):
+    md = pymmcore.Metadata()
+    pix = self.pop_next_image_md(0, 0, md)
+    tags = {key: md.GetSingleTag(key).GetValue() for key in md.GetKeys()}
+    return TaggedImage(tags, pix)
+
+def get_tagged_image(core, cam_index, camera, height, width, binning=None, pixel_type=None, roi_x_start=None,
+                     roi_y_start=None):
+    """
+    Different signature than the Java version because of difference in metadata handling in the swig layers
+    """
+    pix = core.get_image()
+    md = pymmcore.Metadata()
+    # most of the same tags from pop_next_tagged_image, which may not be the same as the MMCoreJ version of this function
+    tags = {'Camera': camera, 'Height': height, 'Width': width, 'PixelType': pixel_type,
+            'CameraChannelIndex': cam_index}
+    # Could optionally add these for completeness but there might be a performance hit
+    if binning is not None:
+        tags['Binning'] = binning
+    if roi_x_start is not None:
+        tags['ROI-X-start'] = roi_x_start
+    if roi_y_start is not None:
+        tags['ROI-Y-start'] = roi_y_start
+
+    return TaggedImage(tags, pix)
 
 def _camel_to_snake(name):
     """
@@ -29,10 +58,7 @@ def _camel_to_snake(name):
 
 def _create_pymmcore_instance():
     """
-    Make a subclass of CMMCore with two differences:
-
-    1. All methods are converted to snake_case
-    2. add convenience methods to match the MMCoreJ API:
+    Make a subclass of CMMCore with all methods converted to snake_case
     """
 
     # Create a new dictionary for the class attributes
@@ -53,37 +79,6 @@ def _create_pymmcore_instance():
 
     instance = clz()
 
-    def pop_next_tagged_image(self):
-        md = pymmcore.Metadata()
-        pix = self.pop_next_image_md(0, 0, md)
-        tags = {key: md.GetSingleTag(key).GetValue() for key in md.GetKeys()}
-        return TaggedImage(tags, pix)
-
-    def get_tagged_image(core, cam_index, camera, height, width, binning=None, pixel_type=None, roi_x_start=None,
-                         roi_y_start=None):
-        """
-        Different signature than the Java version because of difference in metadata handling in the swig layers
-        """
-        pix = core.get_image()
-        md = pymmcore.Metadata()
-        # most of the same tags from pop_next_tagged_image, which may not be the same as the MMCoreJ version of this function
-        tags = {'Camera': camera, 'Height': height, 'Width': width, 'PixelType': pixel_type,
-                'CameraChannelIndex': cam_index}
-        # Could optionally add these for completeness but there might be a performance hit
-        if binning is not None:
-            tags['Binning'] = binning
-        if roi_x_start is not None:
-            tags['ROI-X-start'] = roi_x_start
-        if roi_y_start is not None:
-            tags['ROI-Y-start'] = roi_y_start
-
-        return TaggedImage(tags, pix)
-
-    instance.get_tagged_image = types.MethodType(get_tagged_image, instance)
-    instance.pop_next_tagged_image = types.MethodType(pop_next_tagged_image, instance)
-
-    # attach TaggedImage class
-    instance.TaggedImage = TaggedImage
     return instance
 
 
@@ -166,6 +161,12 @@ def create_core_instance(
             mmc.load_system_configuration(config_file)
         mmc.set_circular_buffer_memory_footprint(buffer_size_mb)
         _PYMMCORES.append(mmc) # Store so it doesn't get garbage collected
+
+        ##  Some hacks to somewhat mimic the MMCoreJ API
+        mmc.get_tagged_image = types.MethodType(get_tagged_image, mmc)
+        mmc.pop_next_tagged_image = types.MethodType(pop_next_tagged_image, mmc)
+        # attach TaggedImage class
+        mmc.TaggedImage = TaggedImage
     else:
         classpath = mm_app_path + '/plugins/Micro-Manager/*'
         if java_loc is None:

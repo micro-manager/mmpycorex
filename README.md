@@ -3,11 +3,63 @@
 
 # mmpycorex
 
-This package contains:
-- A unified `Core` for using MMCore through python, either using `pymmcore` or using the ZMQ-remote MMCoreJ.
-- functions for launching MMCore instances
+This package contains modules for downloading and installing MM through python, and for accessing the Java core of
+a running micro-manager instance, creating a headless java core object for access through python, or creating and instance of
+the python wrapper of the core (pymmcore)
+
+### Installation
+
+`pip install mmpycorex`
+
+## Accessing the Java core through python
+```python
+### Java Core example
+from mmpycorex import create_core_instance, terminate_core_instances
+
+# If micro-manager is alread running, you can get access to the core directly
+# (just make sure the "run server" in the tools options dialog is checked)
+
+# Otherwise you must create an instance of the Core in headless mode
+mm_location = 'C:/Program files/Micro-Manager/'
+config_file = 'MMConfig_demo.cfg'
+create_core_instance(mm_location, config_file, python_backend=False) # Create a remote MMCoreJ object
+
+# Now that a core is running (either through the MM App or headless mode), create an object to access it
+core = Core()
+
+#### use the core
+
+terminate_core_instances() 
+```
+
+## Accessing the python core (pymmcore)
+```python
+### pymmcore example
+from mmpycorex import create_core_instance, terminate_core_instances
+
+# Otherwise you must create an instance of the Core in headless mode
+mm_location = 'C:/Program files/Micro-Manager/'
+config_file = 'MMConfig_demo.cfg'
+create_core_instance(mm_location, config_file, python_backend=True) # Create pymmcore instance
+
+# Now that a core is running (either through the MM App or headless mode), create an object to access it
+core = Core()
+
+#### use the core
+
+terminate_core_instances() 
+```
+
+## Utilities for programatically installing Micro-Manager
 - Python utility functions for downloading and installing Micro-Manager
 ```python
 from mmpycorex import download_and_install_mm, find_existing_mm_install
+
+# this automatically installs the latest nightly build
+# specify destination="your/custom/path", otherwise it will default to 'C:/Program files/Micro-Manager/'
+# on windows or the home directory on mac
+installed_path = download_and_install_mm()
 ```
+
+
    

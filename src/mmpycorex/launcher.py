@@ -6,7 +6,7 @@ import threading
 import types
 import os
 
-from install import get_default_install_location
+from .install import get_default_install_location
 from pymmcore import CMMCore
 import pymmcore
 from pyjavaz import DEFAULT_BRIDGE_PORT, server_terminated

@@ -122,7 +122,7 @@ def terminate_core_instances(debug=False):
 atexit.register(terminate_core_instances)
 
 def create_core_instance(
-    mm_app_path: str = get_default_install_location(), config_file: str='MMConfig_demo.cfg', java_loc: str=None,
+    mm_app_path: str = 'auto', config_file: str='MMConfig_demo.cfg', java_loc: str=None,
         python_backend=False, core_log_path: str='',
         buffer_size_mb: int=1024, max_memory_mb: int=2000,
         port: int=DEFAULT_BRIDGE_PORT, debug=False):
@@ -139,7 +139,8 @@ def create_core_instance(
     Parameters
     ----------
     mm_app_path : str
-        Path to top level folder of Micro-Manager installation (made with graphical installer)
+        Path to top level folder of Micro-Manager installation (made with graphical installer). If 'auto', it will
+        use the default install location for the current OS
     config_file : str
         Path to micro-manager config file, with which core will be initialized. If None then initialization
         is left to the user.
@@ -158,6 +159,8 @@ def create_core_instance(
     debug : bool
         Print debug messages
     """
+    if mm_app_path == 'auto':
+        mm_app_path = get_default_install_location()
 
     if python_backend:
         mmc = _create_pymmcore_instance()

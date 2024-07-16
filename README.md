@@ -61,5 +61,8 @@ core = Core()
 terminate_core_instances() 
 ```
 
+## Install issues on M1 Macs
+
+https://github.com/conda-forge/miniforge/issues/165#issuecomment-860233092
 
    

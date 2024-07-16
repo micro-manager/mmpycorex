@@ -6,9 +6,11 @@ import threading
 import types
 import os
 
+from mmpycorex.install import get_default_install_location
 from pymmcore import CMMCore
 import pymmcore
 from pyjavaz import DEFAULT_BRIDGE_PORT, server_terminated
+
 
 import re
 
@@ -120,7 +122,7 @@ def terminate_core_instances(debug=False):
 atexit.register(terminate_core_instances)
 
 def create_core_instance(
-    mm_app_path: str, config_file: str=None, java_loc: str=None,
+    mm_app_path: str = get_default_install_location(), config_file: str='MMConfig_demo.cfg', java_loc: str=None,
         python_backend=False, core_log_path: str='',
         buffer_size_mb: int=1024, max_memory_mb: int=2000,
         port: int=DEFAULT_BRIDGE_PORT, debug=False):

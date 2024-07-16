@@ -77,6 +77,18 @@ def find_existing_mm_install():
     else:
         raise ValueError(f"Unsupported OS: {platform}")
 
+def get_default_install_location():
+    """
+    Get the default path where Micro-manager gets installed by the download_and_install_mm function
+    """
+    platform = _get_platform()
+    if platform == 'Windows':
+        return r'C:\Program Files\Micro-Manager'
+    elif platform == 'Mac':
+        return str(os.path.expanduser('~')) + '/Micro-Manager'
+    else:
+        raise ValueError(f"Unsupported OS: {platform}")
+
 def download_and_install_mm(destination='auto', mm_install_log_path=None, ci_build=False):
     """
     Download and install the latest nightly build of Micro-Manager
@@ -109,9 +121,10 @@ def download_and_install_mm(destination='auto', mm_install_log_path=None, ci_bui
     print('Downloading: ', latest_version)
     wget.download(latest_version, out=installer, bar=bar)
 
+    if destination == 'auto':
+        destination = get_default_install_location()
+
     if windows:
-        if destination == 'auto':
-            destination = r'C:\Program Files\Micro-Manager'
         cmd = f"{installer} /SP /VERYSILENT /SUPRESSMSGBOXES /CURRENTUSER /DIR=\"{destination}\""
 
         if mm_install_log_path:
@@ -120,8 +133,6 @@ def download_and_install_mm(destination='auto', mm_install_log_path=None, ci_bui
 
         return destination
     else:
-        if destination == 'auto':
-            destination = str(os.path.expanduser('~')) + '/Micro-Manager'
         try:
             # unmount if already mounted
             subprocess.run(['hdiutil', 'detach', '/Volumes/Micro-Manager'])

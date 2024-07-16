@@ -162,6 +162,10 @@ def create_core_instance(
     if mm_app_path == 'auto':
         mm_app_path = get_default_install_location()
 
+    # if config file is not an absolute path, assume it is relative to the mm_app_path
+    if not os.path.isabs(config_file):
+        config_file = os.path.join(mm_app_path, config_file)
+
     if python_backend:
         mmc = _create_pymmcore_instance()
         mmc.set_device_adapter_search_paths([mm_app_path])

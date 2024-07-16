@@ -23,7 +23,7 @@ jobs:
         pip install flit
     - name: Install package dependencies
       run: |
-        pip install .
+        pip install -e .
     - name: Build package
       run: flit build
     - name: Publish package distributions to PyPI

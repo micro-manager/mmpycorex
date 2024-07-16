@@ -8,4 +8,4 @@ from ._version import __version__, version_info
 
 from .launcher import create_core_instance, terminate_core_instances, is_pymmcore_active
 from .core import Core
-from .install import download_and_install_mm, find_existing_mm_install
+from .install import download_and_install_mm, find_existing_mm_install, get_default_install_location

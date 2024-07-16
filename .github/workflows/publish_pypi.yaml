@@ -24,6 +24,14 @@ jobs:
     - name: Install package dependencies
       run: |
         pip install -e .
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/src" >> $GITHUB_ENV
+    - name: Debug information
+      run: |
+        pwd
+        ls -R
+        echo $PYTHONPATH
+        pip list
     - name: Build package
       run: flit build
     - name: Publish package distributions to PyPI

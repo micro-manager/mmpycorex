@@ -96,7 +96,8 @@ def download_and_install_mm(destination='auto', mm_install_log_path=None, ci_bui
     Parameters
     ----------
     destination : str
-        The directory to install Micro-Manager to. If 'auto', it will install to the user's home directory.
+        The directory to install Micro-Manager to. If 'auto', it will install to "C:\Program Files\Micro-Manager"
+        on Windows, or to the user's home directory on macOS.
     mm_install_log_path : str
         Path to save the installation log to
     ci_build : bool

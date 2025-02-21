@@ -12,7 +12,7 @@ classifiers = [
 ]
 dependencies = [
     "pymmcore",
-    "pyjavaz==1.2.6",
+    "pyjavaz==1.2.7",
     "requests",
     "wget"
 ]

@@ -47,13 +47,13 @@ class AcquisitionMonitor:
 
 def setup_camera(core, image_size, exposure=0.000001, fast_image=True):
     """Configure camera settings for speed tests"""
-    core.set_property('Camera', 'OnCameraCCDYSize', str(image_size))
-    core.set_property('Camera', 'OnCameraCCDXSize', str(image_size))
+    core.setProperty('Camera', 'OnCameraCCDYSize', str(image_size))
+    core.setProperty('Camera', 'OnCameraCCDXSize', str(image_size))
     if fast_image:
-        core.set_property('Camera', 'FastImage', '1')
-        core.snap_image()
-    core.set_exposure(exposure)
-    return core.get_image_buffer_size() / 1024 / 1024  # Returns MB per image
+        core.setProperty('Camera', 'FastImage', '1')
+        core.snapImage()
+    core.setExposure(exposure)
+    return core.getImageBufferSize() / 1024 / 1024  # Returns MB per image
 
 def run_live_mode(
     core,
@@ -62,6 +62,7 @@ def run_live_mode(
     buffer_size_mb: float = 1000,
     duration: float = 5.0,
     check_for_changing_images: bool = False,
+    java_backend: bool = True,
 ):
     """Run camera in continuous/live mode and monitor performance
     
@@ -71,27 +72,27 @@ def run_live_mode(
         read_images: Whether to read and verify images
     """
 
-    core.enable_v2_buffer(use_v2)
-    core.set_circular_buffer_memory_footprint(buffer_size_mb)
+    core.enableV2Buffer(use_v2)
+    core.setCircularBufferMemoryFootprint(buffer_size_mb)
 
     try:
-        core.stop_sequence_acquisition()
-        core.start_continuous_sequence_acquisition(0)
+        core.stopSequenceAcquisition()
+        core.startContinuousSequenceAcquisition(0)
         start_time = time()
         images = []
         last_image = None
         
-        monitor = AcquisitionMonitor(duration=duration, buffer_capacity=core.get_buffer_total_capacity())
+        monitor = AcquisitionMonitor(duration=duration, buffer_capacity=core.getBufferTotalCapacity())
         
         while time() - start_time < duration:
             if check_for_changing_images:
                 try:
-                    live_image = core.get_last_tagged_image()
+                    live_image = core.getLastImage()
                 except:
                     live_image = None
                 
                 if live_image is not None:
-                    if last_image is None or not np.array_equal(live_image.pix, last_image.pix):
+                    if last_image is None or not np.array_equal(live_image, last_image):
                         images.append(live_image)
                         last_image = live_image
                         if len(images) > 5:
@@ -100,7 +101,7 @@ def run_live_mode(
             # Update progress
             monitor.update(
                 elapsed_time=time() - start_time,
-                buffer_free=core.get_buffer_free_capacity()
+                buffer_free=core.getBufferFreeCapacity()
             )
             sleep(0.01)
         
@@ -111,15 +112,14 @@ def run_live_mode(
             if len(images) == 0:
                 raise Exception('No images captured in continuous mode')
             else:
-                pixel_arrays = [img.pix for img in images]
-                all_equal = all(np.array_equal(pixel_arrays[0], arr) for arr in pixel_arrays[1:])
+                all_equal = all(np.array_equal(images[0], arr) for arr in images[1:])
                 if all_equal:
                     raise Exception('All captured images were identical')
     
     except Exception as e:
         raise e
     finally:
-        core.stop_sequence_acquisition()
+        core.stopSequenceAcquisition()
 
 def run_speed_test(
     core,
@@ -149,48 +149,48 @@ def run_speed_test(
         }
         MB_per_image = image_size**2 * 2 / 1024 / 1024
 
-        core.enable_v2_buffer(use_v2)
+        core.enableV2Buffer(use_v2)
         iterator = tqdm(range(n_trials), desc=f'Trial') if n_trials > 1 else range(n_trials)
         for trial in iterator:
             setup_time_start = time()
-            core.set_buffer_memory_footprint(buffer_size_mb)
-            core.reset_buffer()
+            core.setBufferMemoryFootprint(buffer_size_mb)
+            core.resetBuffer()
             setup_time_end = time()
 
             start_time = time()
-            core.start_sequence_acquisition(n_images, 0, True)
+            core.startSequenceAcquisition(n_images, 0, True)
 
             if read_images:
                 images_read = 0
                 monitor = AcquisitionMonitor(
                     total_images=n_images,
-                    buffer_capacity=core.get_buffer_total_capacity()
+                    buffer_capacity=core.getBufferTotalCapacity()
                 )
                 
                 while images_read < n_images:
                     try:
-                        im = core.pop_next_tagged_image()
+                        im = core.popNextTaggedImage()
                         if im is not None:
                             images_read += 1
                             monitor.update(
                                 images_read=images_read,
-                                buffer_free=core.get_buffer_free_capacity()
+                                buffer_free=core.getBufferFreeCapacity()
                             )
                     except:
                         sleep(0.001)
                     
-                    if core.is_buffer_overflowed():
+                    if core.isBufferOverflowed():
                         print('\nOverflow!')
                         break
                 
                 monitor.close()
             else:
-                while core.is_sequence_running():
+                while core.isSequenceRunning():
                     sleep(0.001)
 
             elapsed_time = time() - start_time
 
-            if not core.is_buffer_overflowed():
+            if not core.isBufferOverflowed():
                 frame_rate = n_images/elapsed_time
                 data_rate = frame_rate * MB_per_image / 1024
                 results['data_rates'].append(data_rate)
@@ -202,7 +202,7 @@ def run_speed_test(
     except Exception as e:
         raise e
     finally:
-        core.stop_sequence_acquisition()
+        core.stopSequenceAcquisition()
     return results
 
 def print_speed_results(results: dict):

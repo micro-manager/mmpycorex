@@ -58,7 +58,7 @@ def setup_camera(core, image_size, exposure=0.000001, fast_image=True):
 def run_live_mode(
     core,
     image_size: int = 1024,
-    use_v2: bool = True,
+    use_new_data_buffer: bool = True,
     buffer_size_mb: float = 1000,
     duration: float = 5.0,
     check_for_changing_images: bool = False,
@@ -72,7 +72,7 @@ def run_live_mode(
         read_images: Whether to read and verify images
     """
 
-    core.enableV2Buffer(use_v2)
+    core.enableNewDataBuffer(use_new_data_buffer)
     core.setCircularBufferMemoryFootprint(buffer_size_mb)
 
     try:
@@ -127,7 +127,7 @@ def run_speed_test(
     n_images: int = 100,
     buffer_size_mb: float = 1000,
     n_trials: int = 1,
-    use_v2: bool = True,
+    use_new_data_buffer: bool = True,
     exposure: float = 0.000001,
     read_images: bool = False,
 ):
@@ -139,7 +139,7 @@ def run_speed_test(
                 'n_images': n_images,
                 'buffer_size_mb': buffer_size_mb,
                 'n_trials': n_trials,
-                'use_v2': use_v2,
+                'use_new_data_buffer': use_new_data_buffer,
                 'exposure': exposure,
                 'read_images': read_images,
             },
@@ -149,7 +149,7 @@ def run_speed_test(
         }
         MB_per_image = image_size**2 * 2 / 1024 / 1024
 
-        core.enableV2Buffer(use_v2)
+        core.enableNewDataBuffer(use_new_data_buffer)
         iterator = tqdm(range(n_trials), desc=f'Trial') if n_trials > 1 else range(n_trials)
         for trial in iterator:
             setup_time_start = time()
@@ -212,7 +212,7 @@ def print_speed_results(results: dict):
     print(f"{params['image_size']}x{params['image_size']} image; "
           f"{params['n_images']} images; {params['buffer_size_mb']} MB buffer; "
           f"{params['n_trials']} trials")
-    print(f"Buffer v2={params['use_v2']}")
+    print(f"New data buffer={params['use_new_data_buffer']}")
     
     if results['data_rates']:
         data_rates_array = np.array(results['data_rates'])

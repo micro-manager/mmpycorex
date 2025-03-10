@@ -26,9 +26,10 @@ class _CoreCallback:
             "org.micromanager.remote.RemoteCoreCallback", args=(ZMQRemoteMMCoreJ(port=bridge_port),)
         )
 
-        port = callback_java.get_push_port()
+        camel_case = hasattr(callback_java, "getPushPort")
+        port = callback_java.getPushPort() if camel_case else callback_java.get_push_port()
         pull_socket = PullSocket(port)
-        callback_java.start_push()
+        callback_java.startPush() if camel_case else callback_java.start_push()
 
         while True:
             message = pull_socket.receive(timeout=100)
@@ -81,22 +82,25 @@ class ZMQRemoteMMCoreJ(JavaObject):
             timeout for underlying bridge
         """
         try:
-            return JavaObject("mmcorej.CMMCore", new_socket=new_socket,
+            core = JavaObject("mmcorej.CMMCore", new_socket=new_socket,
                       port=port, timeout=timeout, convert_camel_case=convert_camel_case, debug=debug)
+            
+            def register_core_callback_wrapper(callback_fn=None, bridge_port=DEFAULT_BRIDGE_PORT):
+                """
+                Get a CoreCallback function that will fire callback_fn with (name, *args) each
+                time MMCore emits a callback signal
+
+                callback_fn: Callable
+                    a function that takes (name, *args)
+                bridge_port: int
+                    port of the Core instance to get callbacks from
+                """
+                return _CoreCallback(callback_fn=callback_fn, bridge_port=bridge_port)
+            
+            core.register_core_callback = register_core_callback_wrapper
+            return core
         except Exception as e:
             raise Exception(f"Couldn't create Core. Is Micro-Manager running and is the ZMQ server on {port} option enabled?")
-
-    def get_core_callback(self, callback_fn=None, bridge_port=DEFAULT_BRIDGE_PORT):
-        """
-        Get a CoreCallback function that will fire callback_fn with (name, *args) each
-        time MMCore emits a callback signal
-
-        callback_fn: Callable
-            a function that takes (name, *args)
-        bridge_port: int
-            port of the Core instance to get callbacks from
-        """
-        return _CoreCallback(callback_fn=callback_fn, bridge_port=bridge_port)
 
 
 class Core:

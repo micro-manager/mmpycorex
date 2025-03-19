@@ -84,26 +84,72 @@ def _create_pymmcore_instance():
     return instance
 
 
-_JAVA_HEADLESS_SUBPROCESSES = []
+_JAVA_HEADLESS_SUBPROCESSES : dict[int, subprocess.Popen] = {}
 _PYMMCORES = []
 
 def is_pymmcore_active():
+    """
+    Check if any Python headless instance of Micro-Manager core is active.
+    """
     return len(_PYMMCORES) > 0
 
-def terminate_core_instances(debug=False):
-    
-    for p in _JAVA_HEADLESS_SUBPROCESSES:
-        port = p.port
+def is_java_active():
+    """
+    Check if any Java headless instance of Micro-Manager core is active.
+    """
+    return len(_JAVA_HEADLESS_SUBPROCESSES) > 0
+
+def is_java_port_allocated(port: int):
+    """
+    Check if a port is already allocated for a Java headless instance of Micro-Manager core.
+    """
+    return port in _JAVA_HEADLESS_SUBPROCESSES
+
+def active_java_ports():
+    """
+    Get the ports of active Java headless instances of Micro-Manager core.
+    """
+    return list(_JAVA_HEADLESS_SUBPROCESSES.keys())
+
+def terminate_java_instances(debug=False, port: int = None):
+    """
+    Terminate headless instances of Micro-Manager core started with the Java backend.
+
+    Parameters
+    ----------
+    debug : bool
+        Print debug messages
+    port : int
+        Port of the server to terminate. If None, all servers will be terminated
+    """
+    if not is_java_active():
+        logger.debug('No Java instances to stop')
+        return
+
+    for key in active_java_ports():
+        if port and port != key:
+            continue
+
+        process = _JAVA_HEADLESS_SUBPROCESSES[key]
         if debug:
-            logger.debug('Stopping headless process with pid {}'.format(p.pid))
-        p.terminate()
-        server_terminated(port)
+            logger.debug(f'Stopping headless process with pid {process.pid}')
+        process.terminate()
+        server_terminated(key)
         if debug:
-            logger.debug('Waiting for process with pid {} to terminate'.format(p.pid))
-        p.wait()  # wait for process to terminate
+            logger.debug(f'Waiting for process with pid {process.pid} to terminate')
+        process.wait()  # wait for process to terminate
         if debug:
-            logger.debug('Process with pid {} terminated'.format(p.pid))
-    _JAVA_HEADLESS_SUBPROCESSES.clear()
+            logger.debug(f'Process with pid {process.pid} terminated')
+        del _JAVA_HEADLESS_SUBPROCESSES[key]
+
+def terminate_pymmcore_instances(debug=False):
+    """
+    Terminate headless instances of Micro-Manager core started with the Python backend.
+    """
+    if not is_pymmcore_active():
+        logger.debug('No pymmcore instances to stop')
+        return
+
     if debug:
         logger.debug('Stopping {} pymmcore instances'.format(len(_PYMMCORES)))
     for c in _PYMMCORES:
@@ -117,6 +163,14 @@ def terminate_core_instances(debug=False):
     _PYMMCORES.clear()
     if debug:
         logger.debug('Headless stopped')
+
+def terminate_core_instances(debug=False):
+    """
+    Terminate all headless instances of Micro-Manager core.
+    """
+    terminate_java_instances(debug)
+    terminate_pymmcore_instances(debug)
+    
 
 # make sure any Java processes are cleaned up when Python exits
 atexit.register(terminate_core_instances)
@@ -180,6 +234,9 @@ def create_core_instance(
         # attach TaggedImage class
         mmc.TaggedImage = TaggedImage
     else:
+        if is_java_port_allocated():
+            raise Exception(f'Port {port} already in use')
+
         classpath = mm_app_path + '/plugins/Micro-Manager/*'
         if java_loc is None:
             if platform.system() == "Windows":
@@ -217,7 +274,7 @@ def create_core_instance(
                 ], cwd=mm_app_path, stdout=subprocess.PIPE
             )
         process.port = port
-        _JAVA_HEADLESS_SUBPROCESSES.append(process)
+        _JAVA_HEADLESS_SUBPROCESSES[port] = process
 
         started = False
         output = True
@@ -230,7 +287,7 @@ def create_core_instance(
         if debug:
             logger.debug('Headless mode started')
             def loggerFunction():
-                while process in _JAVA_HEADLESS_SUBPROCESSES:
+                while process in _JAVA_HEADLESS_SUBPROCESSES.values():
                     line = process.stdout.readline().decode('utf-8')
                     if line.strip() != '':
                         logger.debug(line)

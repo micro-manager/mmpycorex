@@ -217,7 +217,7 @@ def create_core_instance(
         mm_app_path = get_default_install_location()
 
     # if config file is not an absolute path, assume it is relative to the mm_app_path
-    if not os.path.isabs(config_file):
+    if config_file is not None and not os.path.isabs(config_file):
         config_file = os.path.join(mm_app_path, config_file)
 
     if python_backend:

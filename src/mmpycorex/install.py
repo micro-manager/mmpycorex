@@ -68,14 +68,24 @@ def find_existing_mm_install():
         The path to the installed Micro-Manager directory, or None if not found
     """
     platform = _get_platform()
-    if platform == 'Windows':
-        if os.path.isdir(r'C:\Program Files\Micro-Manager'):
-            return r'C:\Program Files\Micro-Manager'
-    elif platform == 'Mac':
-        if os.path.isdir(str(os.path.expanduser('~')) + '/Micro-Manager'):
-            return str(os.path.expanduser('~')) + '/Micro-Manager'
-    else:
+
+    dir_names = ['Micro-Manager', 'Micro-Manager-2.0']
+
+    paths = {
+        'Windows': os.environ.get('PROGRAMFILES', r'C:\Program Files'),
+        'Mac': os.path.expanduser('~'),
+    }
+
+    if platform not in paths:
         raise ValueError(f"Unsupported OS: {platform}")
+    
+
+    for dir_name in dir_names:
+        path = os.path.join(paths[platform], dir_name)
+        if os.path.isdir(path):
+            return path
+
+    raise FileNotFoundError('Micro-Manager not found in the default installation path.')
 
 def get_default_install_location():
     """

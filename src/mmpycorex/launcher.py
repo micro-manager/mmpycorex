@@ -6,7 +6,7 @@ import threading
 import types
 import os
 
-from .install import get_default_install_location
+from .install import find_existing_mm_install
 from pymmcore import CMMCore
 import pymmcore
 from pyjavaz import DEFAULT_BRIDGE_PORT, server_terminated
@@ -214,7 +214,7 @@ def create_core_instance(
         Print debug messages
     """
     if mm_app_path == 'auto':
-        mm_app_path = get_default_install_location()
+        mm_app_path = find_existing_mm_install()
 
     # if config file is not an absolute path, assume it is relative to the mm_app_path
     if config_file is not None and not os.path.isabs(config_file):
@@ -234,7 +234,7 @@ def create_core_instance(
         # attach TaggedImage class
         mmc.TaggedImage = TaggedImage
     else:
-        if is_java_port_allocated():
+        if is_java_port_allocated(port):
             raise Exception(f'Port {port} already in use')
 
         classpath = mm_app_path + '/plugins/Micro-Manager/*'
